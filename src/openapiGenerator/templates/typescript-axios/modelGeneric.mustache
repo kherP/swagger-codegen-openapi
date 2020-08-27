@@ -1,0 +1,41 @@
+{{#withSeparateModelsAndApi}}
+// tslint:disable
+import { APIModel, APIModelOptions, AttributeMapItem } from "{{apiRelativeToRoot}}base";
+{{/withSeparateModelsAndApi}}
+
+export class {{classname}} extends APIModel {
+{{#vars}}
+{{#description}}
+    /**
+    * {{{description}}}
+    */
+{{/description}}
+    {{name}}: {{#isEnum}}{{#hasEnums}}{{classname}}.{{/hasEnums}}{{{datatypeWithEnum}}}{{/isEnum}}{{^isEnum}}{{{datatype}}}{{/isEnum}};
+{{/vars}}
+
+    constructor(options?: APIModelOptions) {
+        super({{classname}}.attributeTypeMap, options);
+    }
+
+    static get attributeTypeMap(): Array<AttributeMapItem> {
+        return [{{#vars}}
+            { name: "{{#name}}{{name}}{{/name}}{{^name}}{{baseName}}{{/name}}", type: "{{#isEnum}}{{{datatypeWithEnum}}}{{/isEnum}}{{^isEnum}}{{{datatype}}}{{/isEnum}}" }{{#hasMore}},{{/hasMore}}{{/vars}}
+        ];
+    }
+}
+
+{{#hasEnums}}
+export namespace {{classname}} {
+{{#vars}}
+{{#isEnum}}
+    export enum {{enumName}} {
+        {{#allowableValues}}
+        {{#enumVars}}
+        {{name}} = {{{value}}}{{^-last}},{{/-last}}
+        {{/enumVars}}
+        {{/allowableValues}}
+    }
+{{/isEnum}}
+{{/vars}}
+}
+{{/hasEnums}}

@@ -1,0 +1,255 @@
+// tslint:disable
+import axios, { AxiosRequestConfig, AxiosInstance, AxiosPromise, AxiosResponse, AxiosError, Canceler } from "axios";
+// Utils
+import { isEmpty } from "@sebgroup/frontend-tools/dist/isEmpty";
+import { StorageManagement } from "@sebgroup/frontend-tools/dist/StorageManagement";
+
+{{#withCustomInterceptors}}
+const interceptors: ApiInterceptorsProps = require("@ApiInterceptors").default;
+{{/withCustomInterceptors}}
+
+let mocks: any;
+{{#apiInfo}}
+{{debugger}}
+{{/apiInfo}}
+if (process.env.NODE_ENV !== "production") {
+    mocks = require("./mock.json");
+}
+
+interface KeyValuePair {
+    [key: string]: any;
+}
+
+export const defaultBasePath: string = "{{#baseUrl}}{{baseUrl}}{{/baseUrl}}{{^baseUrl}}{{#basePath}}{{{basePath}}}{{/basePath}}{{/baseUrl}}".replace(/\/$/, "");
+
+export enum StorageKeysEnum {
+    TOKEN = "TOKEN"
+}
+
+export interface AxiosResponseInterceptor<T = any> {
+    onFullfilled: (response: AxiosResponse<T>) => AxiosResponse<T>;
+    onRejected: (err: AxiosError<any>) => Promise<never>;
+}
+
+export interface AxiosRequestInterceptor {
+    onFullfilled: (axiosConfig: AxiosRequestConfig) => AxiosRequestConfig | Promise<AxiosRequestConfig>;
+    onRejected: (err: any) => number;
+}
+
+export interface ApiInterceptorsProps {
+    request: AxiosRequestInterceptor;
+    response: AxiosResponseInterceptor;
+}
+
+export interface DefaultConfig {
+    delay: number;
+    defaultHeaders?: () => {};
+    useMock?: boolean;
+}
+
+export function simulateData(resolve: any, data: any, status: number, timeout: number): any {
+    return setTimeout(() => { resolve({ status: status, data: data }); }, timeout);
+}
+
+const configs: DefaultConfig = {{#withCustomConfigs}}require("@configs").default;{{/withCustomConfigs}}{{^withCustomConfigs}}{
+    delay: 1500,
+    defaultHeaders: () => {
+        return {};
+    },
+    useMock: false
+};
+{{/withCustomConfigs}}
+
+export class APIHandler {
+    protected basePath = defaultBasePath;
+    protected defaultHeaders: any = configs.defaultHeaders();
+    protected axiosInstance: AxiosInstance = axios.create();
+    protected storage: StorageManagement = new StorageManagement();
+    protected className: string;
+
+    constructor(className: string) {
+        this.className = className;
+        {{#withCustomInterceptors}}
+        interceptors.response && this.axiosInstance.interceptors.response.use(interceptors.response?.onFullfilled, interceptors.response?.onRejected);
+        interceptors.request && this.axiosInstance.interceptors.request.use(interceptors.request?.onFullfilled, interceptors.request?.onRejected);
+        {{/withCustomInterceptors}}
+    }
+
+    /**
+     * Initializes the API url with the URL params
+     * @param path The API path
+     * @param urlParams The url params to be inserted in the API path
+     * @returns The initialized API URL
+     */
+    protected initAPIURL(path: string, urlParams: KeyValuePair): string {
+        if (urlParams) {
+            for (let key in urlParams) {
+                path = path.replace(`{${key}}`, urlParams[key]);
+            }
+        }
+        return this.basePath + path;
+    }
+
+    /**
+     * Merges two objects by mutating the original with the add-on
+     * @param original The original object that will be mutated with the add on object
+     * @param addOn The add-on object to be merged with the original
+     */
+    protected mergeObjects(original: any, addOn: any): void {
+        if (!isEmpty(addOn)) {
+            for (let key in addOn) {
+                if (addOn[key] !== undefined) {
+                    original[key] = addOn[key];
+                }
+            }
+        }
+    }
+
+    /**
+     * Initializes the API call options with query params and header params
+     * @param options The HTTP options object to be initialized
+     * @param queryParams The query params to be inserted
+     * @param headerParams The header params to be inserted
+     * @param isAuth Whether to apply token for authentication or not
+     * @returns the initialized options object
+     */
+    protected initOptions(options: AxiosRequestConfig, queryParams: KeyValuePair, headerParams: KeyValuePair, canceler: (c: Canceler) => void): AxiosRequestConfig {
+        options = options || {};
+        options.headers = !isEmpty(this.defaultHeaders) ? { ...this.defaultHeaders, ...options.headers } : options.headers;
+        options.params = options.params ? options.params : {};
+        options.responseType = options.responseType ? options.responseType : "json";
+        this.mergeObjects(options.params, queryParams);
+        this.mergeObjects(options.headers, headerParams);
+        if (canceler) {
+            options.cancelToken = new axios.CancelToken((cancel: Canceler) => canceler(cancel))
+        }
+        return options;
+    }
+
+    /**
+     * Make an API call
+     * @param method The HTTP method (`get`, `delete`, `post`, `put`)
+     * @param url The URL of the API to call
+     * @param options The http options to be sent
+     * @param body The body of the request, if any
+     * @param methodName The name of the api method making this call
+     */
+    protected makeCall<T>(method: string, url: string, operationId: string, options: AxiosRequestConfig, body: any = null, methodName: string): AxiosPromise<T> {
+        if (configs.useMock) {
+            let mockedData: any = {};
+            try {
+                mockedData = mocks[operationId][200] || mocks[operationId]["default"] || mocks[operationId];
+            } catch (error) {
+                console.error(error);
+            }
+            return new Promise((resolve) => { simulateData(resolve, mockedData, 200, {{#configPath}}{{configName}}{{/configPath}}{{^configPath}}configs{{/configPath}}.delay); });
+        } else {
+            switch (method) {
+                case "get": return this.axiosInstance.get<T>(url, options);
+                case "delete": return this.axiosInstance.delete(url, options);
+                case "post": return this.axiosInstance.post<T>(url, body, options);
+                case "put": return this.axiosInstance.put<T>(url, body, options);
+                default: throw new Error(`Invalid HTTP method ${method}`);
+            }
+        }
+    }
+}
+
+export type AttributeMapItem = {
+    name: string;
+    type: string;
+};
+
+export type APIParams = {
+    canceler?: (c: Canceler) => void;
+    options?: AxiosRequestConfig;
+};
+
+export type APIModelOptions = {
+    [key: string]: any;
+    /** The value of properties of type `string` */
+    string?: string;
+    /** The value of properties of type `number` */
+    number?: number;
+    /** The value of  properties of type`boolean` */
+    boolean?: boolean;
+    /** The value  properties of typeof `date` */
+    date?: Date;
+    /** The value o properties of typef `array` */
+    array?: Array<any>;
+};
+
+export class APIModel {
+
+    /**
+     * Initializes and attribute map item as a primitive type
+     * @param item An attribute map item to use as reference
+     * @param options The options passed in the constructor to override the default values
+     * @returns The value to be initialized with
+     */
+    static initAsPimitiveType(item: AttributeMapItem, options?: APIModelOptions): any {
+        switch (true) {
+            case /string/i.test(item.type): return options && options.string !== undefined ? options.string : "";
+            case /number/i.test(item.type): return options && options.number !== undefined ? options.number : null;
+            case /boolean/i.test(item.type): return options && options.boolean !== undefined ? options.boolean : null;
+            case /date/i.test(item.type): return options && options.date !== undefined ? options.date : null;
+            case /array/i.test(item.type): return options && options.array !== undefined ? options.array : [];
+            default: return null;
+        }
+    }
+
+    constructor(attributeMap: Array<AttributeMapItem>, options?: APIModelOptions) {
+        if (attributeMap && attributeMap.map) {
+            attributeMap.map((item: AttributeMapItem) => {
+                if (options && options instanceof Object) {
+                    const optionName: string = Object.keys(options).find((name: string) => {
+                        return item.name.toLowerCase() === name.toLowerCase();
+                    });
+                    if (optionName) {
+                        this[item.name] = options[optionName];
+                    } else {
+                        this[item.name] = APIModel.initAsPimitiveType(item, options);
+                    }
+                } else {
+                    this[item.name] = APIModel.initAsPimitiveType(item, options);
+                }
+            });
+        }
+    }
+}
+{{#models}}
+    {{#model}}
+        {{#hasEnums}}
+            {{#-first}}
+
+export const enumsMap: {[index: string]: any} = { 
+            {{/-first}}
+            {{#vars}}
+                {{#isEnum}}
+                    {{#isContainer}}
+    "{{classname}}.{{enumName}}": {{classname}}.{{enumName}}{{^-last}},{{/-last}}
+                    {{/isContainer}}
+                    {{#isNotContainer}}
+    "{{datatypeWithEnum}}": {{datatypeWithEnum}}{{^-last}},{{/-last}}
+                    {{/isNotContainer}}
+                {{/isEnum}}
+            {{/vars}}
+            {{#-last}}
+};
+            {{/-last}}
+        {{/hasEnums}}
+    {{/model}}
+{{/models}}
+
+export namespace APIURLTypes {
+    {{#apiInfo}}
+    {{#apis}}
+    {{#operations}}
+    export interface {{classname}} {
+        {{#operation}}{{nickname}}: string;{{#hasMore}}
+        {{/hasMore}}{{/operation}}
+    }
+    {{/operations}}
+    {{/apis}}
+    {{/apiInfo}}
+}

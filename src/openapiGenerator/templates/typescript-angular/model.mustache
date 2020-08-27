@@ -1,0 +1,29 @@
+{{>licenseInfo}}
+{{#models}}
+{{#model}}
+{{#tsImports}}
+import { {{classname}} } from '{{filename}}';
+{{/tsImports}}
+{{^isEnum}}
+import { AttributeTypeMap } from "./models";
+{{/isEnum}}
+
+{{#description}}
+/**
+ * {{{description}}}
+ */
+{{/description}}
+{{#isEnum}}{{>modelEnum}}{{/isEnum}}{{^isEnum}}{{#isAlias}}{{>modelAlias}}{{/isAlias}}{{^isAlias}}{{#taggedUnions}}{{>modelTaggedUnion}}{{/taggedUnions}}{{^taggedUnions}}{{#oneOf}}{{#-first}}{{>modelOneOf}}{{/-first}}{{/oneOf}}{{^oneOf}}{{>modelGeneric}}{{/oneOf}}{{/taggedUnions}}{{/isAlias}}{{/isEnum}}
+
+{{^isEnum}}
+
+export const attributeTypeMap{{classname}}: AttributeTypeMap[] = [
+    {{#vars}}
+        { name: "{{{name}}}", type: "{{{dataType}}}" },
+    {{/vars}}
+];
+
+{{/isEnum}}
+
+{{/model}}
+{{/models}}

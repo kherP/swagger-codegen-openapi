@@ -1,0 +1,8 @@
+  
+{{#models}}
+{{#model}}
+export * from '{{{ classFilename }}}';
+{{/model}}
+{{/models}}
+
+export interface AttributeTypeMap { name: string; type: string; }

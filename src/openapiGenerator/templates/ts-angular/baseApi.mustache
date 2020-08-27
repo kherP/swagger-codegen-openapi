@@ -1,0 +1,261 @@
+// tslint:disable
+{{>licenseInfo}}
+import { HttpClient, HttpXhrBackend, HttpHeaders, HttpParams, HttpResponse } from "@angular/common/http";
+// Utils
+import { StorageManagement } from "@sebgroup/frontend-tools/dist/StorageManagement";
+import { Observable, Subscriber } from "rxjs";
+
+let mocks: any;
+{{#apiInfo}}
+{{debugger}}
+{{/apiInfo}}
+if (process.env.NODE_ENV !== "production") {
+    mocks = require("./mock.json");
+}
+
+export interface DefaultConfig {
+    delay: number;
+    defaultHeaders?: () => HttpHeaders;
+    useMock?: boolean;
+}
+
+export interface HttpOptions {
+    headers?: HttpHeaders;
+    observe?: "body" | "events" | "response";
+    params?: HttpParams | {
+        [param: string]: string | string[];
+    };
+    reportProgress?: boolean;
+    responseType?: "json" | "arraybuffer" | "blob" | "text";
+    withCredentials?: boolean;
+}
+
+interface KeyValuePair {
+    [key: string]: any;
+}
+
+export const defaultBasePath: string = "{{#baseUrl}}{{baseUrl}}{{/baseUrl}}{{^baseUrl}}{{#basePath}}{{{basePath}}}{{/basePath}}{{/baseUrl}}".replace(/\/$/, "");
+
+const configs: DefaultConfig = {{#withCustomConfigs}}require("@configs").default;{{/withCustomConfigs}}{{^withCustomConfigs}}{
+    delay: 1500,
+    defaultHeaders: () => new HttpHeaders(),
+    useMock: false
+};
+{{/withCustomConfigs}}
+
+export type AttributeMapItem = {
+    name: string;
+    type: string;
+};
+
+export type APIModelOptions = {
+    [key: string]: any;
+    /** The value of properties of type `string` */
+    string?: string;
+    /** The value of properties of type `number` */
+    number?: number;
+    /** The value of  properties of type`boolean` */
+    boolean?: boolean;
+    /** The value  properties of typeof `date` */
+    date?: Date;
+    /** The value o properties of typef `array` */
+    array?: Array<any>;
+};
+
+export class APIModel {
+
+    /**
+     * Initializes and attribute map item as a primitive type
+     * @param item An attribute map item to use as reference
+     * @param options The options passed in the constructor to override the default values
+     * @returns The value to be initialized with
+     */
+    static initAsPimitiveType(item: AttributeMapItem, options?: APIModelOptions): any {
+        switch (true) {
+            case /string/i.test(item.type): return options && options.string !== undefined ? options.string : "";
+            case /number/i.test(item.type): return options && options.number !== undefined ? options.number : null;
+            case /boolean/i.test(item.type): return options && options.boolean !== undefined ? options.boolean : null;
+            case /date/i.test(item.type): return options && options.date !== undefined ? options.date : null;
+            case /array/i.test(item.type): return options && options.array !== undefined ? options.array : [];
+            default: return null;
+        }
+    }
+
+    constructor(attributeMap: Array<AttributeMapItem>, options?: APIModelOptions) {
+        if (attributeMap && attributeMap.map) {
+            attributeMap.map((item: AttributeMapItem) => {
+                if (options && options instanceof Object) {
+                    const optionName: string = Object.keys(options).find((name: string) => {
+                        return item.name.toLowerCase() === name.toLowerCase();
+                    });
+                    if (optionName) {
+                        this[item.name] = options[optionName];
+                    } else {
+                        this[item.name] = APIModel.initAsPimitiveType(item, options);
+                    }
+                } else {
+                    this[item.name] = APIModel.initAsPimitiveType(item, options);
+                }
+            });
+        }
+    }
+}
+{{#models}}
+    {{#model}}
+        {{#hasEnums}}
+            {{#-first}}
+
+export const enumsMap: {[index: string]: any} = { 
+            {{/-first}}
+            {{#vars}}
+                {{#isEnum}}
+                    {{#isContainer}}
+    "{{classname}}.{{enumName}}": {{classname}}.{{enumName}}{{^-last}},{{/-last}}
+                    {{/isContainer}}
+                    {{#isNotContainer}}
+    "{{datatypeWithEnum}}": {{datatypeWithEnum}}{{^-last}},{{/-last}}
+                    {{/isNotContainer}}
+                {{/isEnum}}
+            {{/vars}}
+            {{#-last}}
+};
+            {{/-last}}
+        {{/hasEnums}}
+    {{/model}}
+{{/models}}
+
+/**
+* simulate data from mock
+*/
+export function simulateData<T>(subscriber: Subscriber<T>, body: T, timeout: number): NodeJS.Timeout {
+    return setTimeout(() => {
+        subscriber.next(body);
+        subscriber.complete();
+    }, timeout);
+}
+
+export class APIHandler {
+    protected basePath = defaultBasePath;
+    protected storage = new StorageManagement();
+    protected className: string;
+
+    constructor(
+        className: string,
+        basePath?: string,
+        protected httpClient: HttpClient = new HttpClient(new HttpXhrBackend({ build: () => new XMLHttpRequest() }))
+    ) {
+        this.className = className;
+        if (basePath) {
+            this.basePath = basePath;    
+        }
+    }
+
+    /**
+     * Verifies the required params and throws an error if any of the params were `null` or `undefined`
+     * @param requiredParams The required params in key-value pair object
+     * @param methodName The method name used for generating the error message
+     */
+    protected verifyParams(requiredParams: KeyValuePair, methodName: string): void {
+        if (requiredParams) {
+            for (let key in requiredParams) {
+                if (requiredParams[key] === null || requiredParams[key] === undefined) {
+                    throw new Error(`Required parameter ${key} was null or undefined when calling ${methodName}.`);
+                }
+            }
+        }
+    }
+
+    /**
+     * Initializes the API url with the URL params
+     * @param path The API path
+     * @param urlParams The url params to be inserted in the API path
+     * @returns The initialized API URL
+     */
+    protected initAPIURL(path: string, urlParams: KeyValuePair): string {
+        if (urlParams) {
+            for (let key in urlParams) {
+                path = path.replace(key, urlParams[key]);
+            }
+        }
+        return this.basePath + path;
+    }
+
+    /**
+     * Initializes the API call options with query params and header params
+     * @param options The HTTP options object to be initialized
+     * @param queryParams The query params to be inserted
+     * @param headerParams The header params to be inserted
+     * @returns the initialized options object
+     */
+    protected initOptions(options: HttpOptions, queryParams: KeyValuePair, headerParams: KeyValuePair): HttpOptions {
+        const defaultHeaders: HttpHeaders = configs.defaultHeaders();
+        const optionsHeaders: HttpHeaders = options.headers;
+        const newHeader: KeyValuePair = { ...headerParams };
+        defaultHeaders && defaultHeaders.keys().map((key: string) => {
+            newHeader[key] = defaultHeaders.getAll(key);
+        });
+        optionsHeaders && optionsHeaders.keys().map((key: string) => {
+            newHeader[key] = optionsHeaders.getAll(key);
+        });
+        options.headers = new HttpHeaders(defaultHeaders ? { ...newHeader } : {});
+        options.params = options.params ? options.params : new HttpParams();
+        options.responseType = options.responseType ? options.responseType : "json";
+        if (queryParams) {
+            for (let key in queryParams) {
+                if (queryParams[key] !== undefined) {
+                    (<HttpParams>options.params).set(key, queryParams[key]);
+                }
+            }
+        }
+        if (headerParams) {
+            for (let key in headerParams) {
+                if (headerParams[key] !== undefined) {
+                    (<HttpHeaders>options.headers).set(key, headerParams[key]);
+                }
+            }
+        }
+        return options;
+    }
+
+    /**
+     * Make an API call
+     * @param method The HTTP method (`get`, `delete`, `post`, `put`)
+     * @param url The URL of the API to call
+     * @param options The http options to be sent
+     * @param body The body of the request, if any
+     */
+    protected makeCall<T>(method: string, url: string, operationId: string, options: HttpOptions, body?: any): Observable<any> {
+        if (configs.useMock) {
+            return new Observable((subscriber: Subscriber<HttpResponse<T>>) => {
+                let mockedData: any = {};
+                try {
+                    mockedData = mocks[operationId][200] || mocks[operationId]["default"] || mocks[operationId];
+                } catch (error) {
+                    console.error(error);
+                }
+                simulateData(subscriber, mockedData, configs.delay)
+            });
+        } else {
+            switch (method) {
+                case "get": return this.httpClient.get<T>(url, <any>options);
+                case "delete": return this.httpClient.delete<T>(url, <any>options);
+                case "post": return this.httpClient.post<T>(url, body, <any>options);
+                case "put": return this.httpClient.put<T>(url, body, <any>options);
+                default: throw new Error(`Invalid HTTP method ${method}`);
+            }
+        }
+    }
+}
+
+export namespace APIURLTypes {
+    {{#apiInfo}}
+    {{#apis}}
+    {{#operations}}
+    export interface {{classname}} {
+        {{#operation}}{{nickname}}: string;{{#hasMore}}
+        {{/hasMore}}{{/operation}}
+    }
+    {{/operations}}
+    {{/apis}}
+    {{/apiInfo}}
+}
