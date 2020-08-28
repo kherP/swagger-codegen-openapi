@@ -1,7 +1,5 @@
 import { OpenAPI, OpenAPIV3, OpenAPIV2 } from "openapi-types";
 
-type RelationType = "oneOf" | "anyOf" | "allOf" | "not";
-
 export function generateModelsWithData(obj: OpenAPI.Document) {
     const models: any = {};
     const schemas: OpenAPIV3.ComponentsObject | OpenAPIV2.DefinitionsObject = ((obj as OpenAPIV3.Document)?.components)?.schemas || (obj as OpenAPIV2.Document).definitions;

@@ -2,13 +2,6 @@ import { OpenAPI, OpenAPIV3, OpenAPIV2 } from "openapi-types";
 import { generateData, generateModelsWithData } from "./generateData";
 
 export const APPLICATION_JSON: string = "application/json";
-export type ApplicationJson = "application/json";
-
-export type ResponsesType<T extends string = ApplicationJson> = {
-    [path: string]: {
-        [k in T]: { schema: any };
-    };
-};
 
 export const extractResponses = (obj: OpenAPI.Document): ResponsesType => {
     const extracted: any = {};

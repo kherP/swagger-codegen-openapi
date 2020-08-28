@@ -1,6 +1,6 @@
 {
     "compilerOptions": {
-        "outDir": "./dist",
+        "outDir": "dist",
         "rootDir": "src",
         "module": "esnext",
         "moduleResolution": "node",
@@ -19,6 +19,7 @@
         "noImplicitAny": false,
         "strictNullChecks": false,
         "esModuleInterop": true,
+        "isolatedModules": true,
         "allowSyntheticDefaultImports": true
     },
     "exclude": [
@@ -29,6 +30,8 @@
         "**/*.test.ts",
     ],
     "types": [
-        "typePatches"
+        "typePatches",
+        "./node_modules/@types",
+        "src/@types"
     ]
 }

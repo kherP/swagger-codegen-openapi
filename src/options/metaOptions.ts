@@ -1,18 +1,3 @@
-import { OptionType } from "./option.type";
-
-interface MetaArgumentType {
-    language?: string;
-    l?: string;
-    name?: string;
-    n?: string;
-    output?: string;
-    o?: string;
-    package?: string;
-    p?: string;
-    type?: string;
-    t?: string;
-}
-
 enum OptionName {
     language = "--language",
     languageShort = "-l",
@@ -26,7 +11,7 @@ enum OptionName {
     typeShort = "-t",
 }
 
-const options: Array<OptionType> = [
+export const MetaOptions: Array<OptionType> = [
     {
         option: [OptionName.languageShort, OptionName.language],
         description: "the implementation language for the generator class"
@@ -48,5 +33,3 @@ const options: Array<OptionType> = [
         description: "the type of generator that is created"
     }
 ];
-
-export { options as MetaOptions, OptionName as MetaOptionName, MetaArgumentType };
