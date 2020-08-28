@@ -66,23 +66,6 @@ function formatPathToKey(path: string, method: string): string {
 }
 
 /**
- * format operation id
- * @param nickname
- */
-function formatOperationId(nickname: string): string {
-    let newString: string = "";
-    const nicknameArr: Array<string> = nickname.split("_");
-    nicknameArr.forEach((item: string, index: number) => {
-        let newItem: string = item.replace(/[^\w\s]/gi, "");
-        if (index > 0) {
-            newItem = sentenceCase(newItem)
-        }
-        newString += newItem;
-    });
-    return newString;
-}
-
-/**
  * format string to sentence case
  * @param newString string to format
  * @returns formatted string
