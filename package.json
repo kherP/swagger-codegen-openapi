@@ -9,7 +9,7 @@
         "clean": "npm run clean:dist && npm run clean:test",
         "copy": "cp package.json dist/ && cp README.md dist/",
         "lint": "tslint -p tsconfig.json",
-        "build": "npm run clean && npm run lint &&  npm run test && npm run build:production",
+        "build": "npm run clean && npm run lint && npm run build:production",
         "pretest": "npm run clean:test",
         "test": "cross-env NODE_ICU_DATA=node_modules/full-icu jest --forceExit --detectOpenHandles",
         "commit": "git-cz",
