@@ -20,7 +20,10 @@ export const extractResponses = (obj: OpenAPI.Document): ResponsesType => {
             const { responses, operationId } = api;
             let methodName: string = operationId;
             if (methodName) {
-                methodName = methodName.replace(/^\w/, (c: string) => c.toLowerCase());
+                methodName = methodName
+                    .replace(/^\w/, (c: string) => c.toLowerCase())
+                    .replace(new RegExp("(?:[-_])([a-z])", "gi"), (c: string) => c.replace(/[-_]/gi, "").toUpperCase())
+                    .replace(/[^a-zA-Z]/g, "");
             }
             const key: string = methodName ? methodName : formatPathToKey(path, method);
             extracted[key] = {};
@@ -60,6 +63,23 @@ function formatPathToKey(path: string, method: string): string {
         newString += newItem;
     })
     return newString + sentenceCase(method);
+}
+
+/**
+ * format operation id
+ * @param nickname
+ */
+function formatOperationId(nickname: string): string {
+    let newString: string = "";
+    const nicknameArr: Array<string> = nickname.split("_");
+    nicknameArr.forEach((item: string, index: number) => {
+        let newItem: string = item.replace(/[^\w\s]/gi, "");
+        if (index > 0) {
+            newItem = sentenceCase(newItem)
+        }
+        newString += newItem;
+    });
+    return newString;
 }
 
 /**
