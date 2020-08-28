@@ -1,6 +1,6 @@
 import commonjs from "@rollup/plugin-commonjs";
 import json from "@rollup/plugin-json";
-import resolve from "rollup-plugin-node-resolve";
+import resolve from "@rollup/plugin-node-resolve";
 import externals from "rollup-plugin-node-externals";
 import typescript from "@rollup/plugin-typescript";
 import { terser } from "rollup-plugin-terser";
@@ -28,6 +28,11 @@ export default {
         typescript(),
         externals(),
         terser(),
-        summary(),
+        summary({
+            warnLow: 5e5,
+            warnHigh: 7e5,
+            totalLow: 7e5,
+            totalHigh: 8e5
+        }),
     ]
 }
