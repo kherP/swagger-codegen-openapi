@@ -79,14 +79,14 @@ export const customGeneratorMapper: Array<CustomGeneratorMapper> = [
 export const CustomTemplates: Array<SEBTemplate> = [
     {
         generator: "typescript-axios",
-        templatePath: "./node_modules/swagger-codegen-openapi/dist/openapiGenerator/templates/typescript-axios"
+        templatePath: "./node_modules/swagger-codegen-openapi/templates/typescript-axios"
     },
     {
         generator: "typescript-angular",
-        templatePath: "./node_modules/swagger-codegen-openapi/dist/openapiGenerator/templates/typescript-angular"
+        templatePath: "./node_modules/swagger-codegen-openapi/templates/typescript-angular"
     },
     {
         generator: "ts-angular",
-        templatePath: "./node_modules/swagger-codegen-openapi/dist/openapiGenerator/templates/ts-angular"
+        templatePath: "./node_modules/swagger-codegen-openapi/templates/ts-angular"
     }
 ]
