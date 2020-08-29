@@ -12,6 +12,7 @@
             "dom"
         ],
         "declaration": true,
+        "declarationDir": "dist/@types",
         "sourceMap": true,
         "importHelpers": true,
         "noImplicitReturns": false,

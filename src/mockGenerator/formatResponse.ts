@@ -8,30 +8,32 @@ export const extractResponses = (obj: OpenAPI.Document): ResponsesType => {
     const modelSchemas: any = generateModelsWithData(obj);
     Object.keys(obj.paths).forEach(path => {
         const methods: any = obj.paths[path];
-        Object.keys(methods).forEach((method: string) => {
-            const api: OpenAPI.Operation = methods[method];
-            const { responses, operationId } = api;
-            let methodName: string = operationId;
-            if (methodName) {
-                methodName = methodName.replace(/^\w/, (c: string) => c.toLowerCase());
-            }
-            const key: string = methodName ? methodName : formatPathToKey(path, method);
-            extracted[key] = {};
-            Object.keys(responses).forEach((statusCode: string) => {
-                const response: OpenAPIV3.ParameterObject | OpenAPIV2.ParameterObject = responses[statusCode];
-                const defaultReturn: string = response.description;
-                let mock: any = response.schema || defaultReturn;
-                let isExample: boolean = false;
-                if (response.content && response.content[APPLICATION_JSON]?.example) {
-                    mock = response.content[APPLICATION_JSON].example;
-                    isExample = true;
-                } else if (response.content && response.content[APPLICATION_JSON]?.schema) {
-                    mock = response.content[APPLICATION_JSON].schema;
+        Object
+            .keys(methods)
+            .forEach((method: string) => {
+                const api: OpenAPI.Operation = methods[method];
+                const { responses, operationId } = api;
+                let methodName: string = operationId;
+                if (methodName) {
+                    methodName = methodName.replace(/^\w/, (c: string) => c.toLowerCase());
                 }
-                mock = typeof mock === "string" || isExample ? mock : generateData("", mock, modelSchemas);
-                extracted[key][statusCode] = mock;
+                const key: string = methodName ? methodName : formatPathToKey(path, method);
+                extracted[key] = {};
+                Object.keys(responses).forEach((statusCode: string) => {
+                    const response: OpenAPIV3.ParameterObject | OpenAPIV2.ParameterObject = responses[statusCode];
+                    const defaultReturn: string = response.description;
+                    let mock: any = response.schema || defaultReturn;
+                    let isExample: boolean = false;
+                    if (response.content && response.content[APPLICATION_JSON]?.example) {
+                        mock = response.content[APPLICATION_JSON].example;
+                        isExample = true;
+                    } else if (response.content && response.content[APPLICATION_JSON]?.schema) {
+                        mock = response.content[APPLICATION_JSON].schema;
+                    }
+                    mock = typeof mock === "string" || isExample ? mock : generateData("", mock, modelSchemas);
+                    extracted[key][statusCode] = mock;
+                });
             });
-        });
     });
     return extracted;
 };

@@ -14,13 +14,12 @@ export default {
         }
     },
     output: {
-        name: "swagger-codegen-openapi",
         dir: "dist",
         format: "cjs",
         sourcemap: true,
         exports: "auto"
     },
-    external: ["@openapitools/openapi-generator-cli", "commander"],
+    external: ["@openapitools/openapi-generator-cli", "commander", "fs"],
     plugins: [
         resolve({ preferBuiltins: true }),
         commonjs(),
@@ -28,11 +27,6 @@ export default {
         typescript(),
         externals(),
         terser(),
-        summary({
-            warnLow: 5e5,
-            warnHigh: 7e5,
-            totalLow: 7e5,
-            totalHigh: 8e5
-        }),
+        summary({ warnLow: 2e4, warnHigh: 3e4 }),
     ]
 }

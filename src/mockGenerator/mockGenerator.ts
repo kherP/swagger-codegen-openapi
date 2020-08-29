@@ -1,7 +1,8 @@
 import { extractResponses } from "./formatResponse";
-const fs = require("fs");
-import { join } from "path";
-import request from "request";
+import fs from "fs";
+import path from "path";
+import https from "https";
+import { IncomingMessage } from "http";
 
 /**
  * generate mock data
@@ -12,13 +13,21 @@ export function generateMock(swaggerUrl: string, outputPath: string) {
     if (!!swaggerUrl) {
         process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = "0";
         if (swaggerUrl.indexOf("http") > -1) {
-            request.get(swaggerUrl, (error: any, response: any) => {
-                formatJSON(error, response, outputPath);
-            });
+            https
+                .get(swaggerUrl, (resp: IncomingMessage) => {
+                    let data: string = "";
+
+                    resp.on("data", (chunk: string) => (data += chunk));
+                    resp.on("end", () => formatJSON(JSON.parse(data), outputPath));
+                })
+                .on("error", (error: Error) => { throw error; });
         } else {
-            fs.readFile(swaggerUrl, "utf-8", (error: any, response: any) => {
-                formatJSON(error, response, outputPath, true);
-            });
+            try {
+                const file = fs.readFileSync(swaggerUrl).toString();
+                formatJSON(JSON.parse(file), outputPath, true);
+            } catch (error) {
+                throw new Error(error);
+            }
         }
     }
 }
@@ -30,22 +39,17 @@ export function generateMock(swaggerUrl: string, outputPath: string) {
  * @param outputPath output directory
  * @param isFile is local file
  */
-function formatJSON(error: any, response: any, outputPath: string, isFile?: boolean) {
-    if (error) {
-        throw new Error(error);
-    } else {
-        if (response?.statusCode !== 200 && !isFile) {
-            throw new Error(response.statusMessage);
-        }
-        console.log("################# generating mock ########################");
-        const body = JSON.parse(response.body || response);
-        const extractedBody: any = extractResponses(body);
-        if (!fs.existsSync(outputPath)){
-            fs.mkdirSync(outputPath, { recursive: true });
-        }
-        writeFiles(extractedBody, outputPath);
-        console.log("\x1b[32m%s\x1b[0m", "################# Mock generated ########################");
+function formatJSON(data: any, outputPath: string, isFile?: boolean) {
+    console.log("################# generating mock ########################");
+    const extractedBody: any = extractResponses(data);
+    if (!fs.existsSync(outputPath)) {
+        fs.mkdirSync(outputPath, { recursive: true });
     }
+    writeFiles(extractedBody, outputPath);
+    console.log(
+        "\x1b[32m%s\x1b[0m",
+        "################# Mock generated ########################"
+    );
 }
 
 /**
@@ -55,7 +59,7 @@ function formatJSON(error: any, response: any, outputPath: string, isFile?: bool
  */
 export const writeFiles = (data: any, outputPath: string): void => {
     const fileName: string = `mock.json`;
-    const path: string = join(outputPath || "./", fileName);
+    const to: string = path.join(outputPath || "./", fileName);
     const formatted: string = JSON.stringify(data, null, 2);
-    fs.writeFileSync(path, formatted);
+    fs.writeFileSync(to, formatted);
 };
