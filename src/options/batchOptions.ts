@@ -1,16 +1,3 @@
-import { OptionType } from "./option.type";
-
-interface BatchArgumentType {
-    "fail-fast"?: boolean;
-    "includes-base-dir"?: string;
-    "root-dir"?: string;
-    timeout?: string;
-    threads?: string;
-    r?: string;
-    verbose?: boolean;
-    v?: boolean;
-}
-
 enum OptionName {
     failFast = "--fail-fast",
     includesBaseDir = "--includes-base-dir",
@@ -22,7 +9,7 @@ enum OptionName {
     verboseShort = "-v",
 }
 
-const options: Array<OptionType> = [
+export const BatchOptions: Array<OptionType> = [
     {
         option: [OptionName.failFast],
         description: "fail fast on any errors"
@@ -48,5 +35,3 @@ const options: Array<OptionType> = [
         description: "verbose mode"
     }
 ];
-
-export { options as BatchOptions, BatchArgumentType };

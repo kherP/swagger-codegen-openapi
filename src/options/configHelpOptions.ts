@@ -1,22 +1,3 @@
-import { OptionType } from "./option.type";
-
-interface ConfigHelpArgumentType {
-    f?: string;
-    format?: string;
-    o?: string;
-    output?: string;
-    g?: string;
-    "generator-name"?: string;
-    "feature-set"?: boolean;
-    "import-mappings"?: boolean;
-    "instantiation-types"?: boolean;
-    "language-specific-primitive"?: boolean;
-    "markdown-header"?: boolean;
-    "named-header"?: boolean;
-    "reserved-words"?: boolean;
-    "full-details"?: boolean;
-}
-
 enum OptionName {
     format = "--format",
     formatShort = "-f",
@@ -34,7 +15,7 @@ enum OptionName {
     generatorNameShort = "-g",
 }
 
-const options: Array<OptionType> = [
+export const ConfigHelpOptions: Array<OptionType> = [
     {
         option: [OptionName.formatShort, OptionName.format],
         description: "Write output files in the desired format. Options are 'text', 'markdown' or 'yamlsample'. Default is 'text'."
@@ -81,5 +62,3 @@ const options: Array<OptionType> = [
         defaultValue: "typescript-axios"
     }
 ];
-
-export { options as ConfigHelpOptions, OptionName as ConfigHelpOptionName, ConfigHelpArgumentType };

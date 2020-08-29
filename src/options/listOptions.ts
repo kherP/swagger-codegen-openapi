@@ -1,12 +1,3 @@
-import { OptionType } from "./option.type";
-
-interface ListArgumentType {
-    include?: string;
-    i?: string;
-    short?: boolean;
-    s?: boolean;
-}
-
 enum OptionName {
     include = "--include",
     includeShort = "-i",
@@ -14,7 +5,7 @@ enum OptionName {
     shortShort = "-s",
 }
 
-const options: Array<OptionType> = [
+export const ListOptions: Array<OptionType> = [
     {
         option: [OptionName.includeShort, OptionName.include],
         description: "comma-separated list of stability indexes to include (value: all,beta,stable,experimental,deprecated). Excludes deprecated by default."
@@ -24,5 +15,3 @@ const options: Array<OptionType> = [
         description: "shortened output (suitable for scripting)"
     }
 ];
-
-export { options as ListOptions, OptionName as ListOptionName, ListArgumentType };

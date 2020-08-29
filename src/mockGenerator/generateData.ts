@@ -1,7 +1,5 @@
 import { OpenAPI, OpenAPIV3, OpenAPIV2 } from "openapi-types";
 
-type RelationType = "oneOf" | "anyOf" | "allOf" | "not";
-
 export function generateModelsWithData(obj: OpenAPI.Document) {
     const models: any = {};
     const schemas: OpenAPIV3.ComponentsObject | OpenAPIV2.DefinitionsObject = ((obj as OpenAPIV3.Document)?.components)?.schemas || (obj as OpenAPIV2.Document).definitions;
@@ -11,9 +9,9 @@ export function generateModelsWithData(obj: OpenAPI.Document) {
 
     unsortedSchemaKeysWithRef.sort((a: string, b: string) => {
         const refCount: number = (JSON.stringify(schemas[a]).match(/ref/g) || []).length;
-        const referredKeysCount: number = sortedSchemaKeys.map((current: string): number => {
-            return (JSON.stringify(schemas[a]).match(new RegExp(current, "g")) || []).length;
-        }).reduce((accumulate: number, current: number) => accumulate + current);
+        const referredKeysCount: number = sortedSchemaKeys
+            .map((current: string): number => (JSON.stringify(schemas[a]).match(new RegExp(current, "g")) || []).length)
+            .reduce((accumulate: number, current: number) => accumulate + current);
         return refCount === referredKeysCount ? -1 : 0;
     });
     sortedSchemaKeys = [...sortedSchemaKeys, ...unsortedSchemaKeysWithRef];
@@ -35,18 +33,26 @@ export function generateData(modelName: string, schema: OpenAPIV2.SchemaObject |
             .map((key: RelationType) => {
                 switch (key) {
                     case "allOf":
-                        (schema.allOf as Array<OpenAPIV3.ReferenceObject>).map((item: OpenAPIV3.ReferenceObject) => {
-                            newModel = { ...newModel, ...item.$ref ? getReference(item.$ref, models) : generateData(modelName, item) };
-                        });
+                        (schema.allOf as Array<OpenAPIV3.ReferenceObject>)
+                            .forEach((item: OpenAPIV3.ReferenceObject) => {
+                                newModel = { ...newModel, ...item.$ref ? getReference(item.$ref, models) : generateData(modelName, item) };
+                            });
                         break;
                     case "not": // TODO: fix not property
                         newModel = { ...newModel, ...generateData(modelName, { type: "string" }) };
                         break;
                     default:
-                        const listOfReferences: Array<OpenAPIV3.ReferenceObject> = (schema.oneOf || schema.anyOf) as Array<OpenAPIV3.ReferenceObject>;
-                        const selectedItem: OpenAPIV3.ReferenceObject = listOfReferences?.length ? listOfReferences[Math.floor(Math.random() * listOfReferences.length)] : null;
+                        const listOfReferences: Array<OpenAPIV3.ReferenceObject> = (schema.oneOf || schema.anyOf) as any;
+                        const selectedItem: OpenAPIV3.ReferenceObject = listOfReferences?.length
+                            ? listOfReferences[Math.floor(Math.random() * listOfReferences.length)]
+                            : null;
                         if (!!selectedItem) {
-                            newModel = { ...newModel, ...selectedItem.$ref ? getReference(selectedItem.$ref, models) : generateData(modelName, selectedItem) };
+                            newModel = {
+                                ...newModel,
+                                ...selectedItem.$ref
+                                    ? getReference(selectedItem.$ref, models)
+                                    : generateData(modelName, selectedItem)
+                            };
                         }
                 }
             });
@@ -63,9 +69,7 @@ export function generateData(modelName: string, schema: OpenAPIV2.SchemaObject |
                 }
                 newModel = { ...newModel, ...object };
                 break;
-            case "array":
-                newModel = [generateData(modelName, schema.items, models)];
-                break;
+            case "array": newModel = [generateData(modelName, schema.items, models)]; break;
             case "integer":
             case "number": newModel = schema.example || 0; break;
             case "boolean": newModel = schema.example || true; break;
