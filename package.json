@@ -34,10 +34,6 @@
         "codegen",
         "openapi",
         "typescript",
-        "codegen",
-        "swagger",
-        "openapi",
-        "kherp",
         "mustache"
     ],
     "license": "Apache-2.0",
