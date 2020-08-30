@@ -28,7 +28,7 @@
     "bugs": {
         "url": "https://github.com/kherP/swagger-codegen-openapi/issues"
     },
-    "homepage": "https://github.com/kherP/swagger-codegen-openapi",
+    "homepage": "https://kherp.github.io/swagger-codegen-openapi/",
     "keywords": [
         "swagger",
         "codegen",
