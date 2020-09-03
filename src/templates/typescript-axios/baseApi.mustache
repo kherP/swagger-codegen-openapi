@@ -1,8 +1,7 @@
 // tslint:disable
 import axios, { AxiosRequestConfig, AxiosInstance, AxiosPromise, AxiosResponse, AxiosError, Canceler } from "axios";
 // Utils
-import { isEmpty } from "@sebgroup/frontend-tools/dist/isEmpty";
-import { StorageManagement } from "@sebgroup/frontend-tools/dist/StorageManagement";
+import { isEmpty, StorageManagement } from "@sebgroup/frontend-tools";
 
 {{#withCustomInterceptors}}
 const interceptors: ApiInterceptorsProps = require("@ApiInterceptors").default;
