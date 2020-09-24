@@ -19,7 +19,22 @@ interface KeyValuePair {
     [key: string]: any;
 }
 
+export interface DefaultConfig {
+    delay: number;
+    defaultHeaders?: () => {};
+    useMock?: boolean;
+}
+
 export const defaultBasePath: string = "{{#baseUrl}}{{baseUrl}}{{/baseUrl}}{{^baseUrl}}{{#basePath}}{{{basePath}}}{{/basePath}}{{/baseUrl}}".replace(/\/$/, "");
+
+const configs: DefaultConfig = {{#withCustomConfigs}}require("@configs").default;{{/withCustomConfigs}}{{^withCustomConfigs}}{
+    delay: 1500,
+    defaultHeaders: () => {
+        return {};
+    },
+    useMock: false
+};
+{{/withCustomConfigs}}
 
 export enum StorageKeysEnum {
     TOKEN = "TOKEN"
@@ -40,24 +55,9 @@ export interface ApiInterceptorsProps {
     response: AxiosResponseInterceptor;
 }
 
-export interface DefaultConfig {
-    delay: number;
-    defaultHeaders?: () => {};
-    useMock?: boolean;
-}
-
 export function simulateData(resolve: any, data: any, status: number, timeout: number): any {
     return setTimeout(() => { resolve({ status: status, data: data }); }, timeout);
 }
-
-const configs: DefaultConfig = {{#withCustomConfigs}}require("@configs").default;{{/withCustomConfigs}}{{^withCustomConfigs}}{
-    delay: 1500,
-    defaultHeaders: () => {
-        return {};
-    },
-    useMock: false
-};
-{{/withCustomConfigs}}
 
 export class APIHandler {
     protected basePath = defaultBasePath;
