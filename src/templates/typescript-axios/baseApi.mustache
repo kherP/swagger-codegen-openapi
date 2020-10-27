@@ -61,7 +61,6 @@ export function simulateData(resolve: any, data: any, status: number, timeout: n
 
 export class APIHandler {
     protected basePath = defaultBasePath;
-    protected defaultHeaders: any = configs.defaultHeaders();
     protected axiosInstance: AxiosInstance = axios.create();
     protected storage: StorageManagement = new StorageManagement();
     protected className: string;
@@ -113,8 +112,9 @@ export class APIHandler {
      * @returns the initialized options object
      */
     protected initOptions(options: AxiosRequestConfig, queryParams: KeyValuePair, headerParams: KeyValuePair, canceler: (c: Canceler) => void): AxiosRequestConfig {
+        const defaultHeaders: any = configs.defaultHeaders();
         options = options || {};
-        options.headers = !isEmpty(this.defaultHeaders) ? { ...this.defaultHeaders, ...options.headers } : options.headers;
+        options.headers = !isEmpty(defaultHeaders) ? { ...defaultHeaders, ...options.headers } : options.headers;
         options.params = options.params ? options.params : {};
         options.responseType = options.responseType ? options.responseType : "json";
         this.mergeObjects(options.params, queryParams);
