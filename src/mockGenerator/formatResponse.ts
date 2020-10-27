@@ -23,7 +23,7 @@ export const extractResponses = (obj: OpenAPI.Document): ResponsesType => {
                 methodName = methodName
                     .replace(/^\w/, (c: string) => c.toLowerCase())
                     .replace(new RegExp("(?:[-_])([a-z])", "gi"), (c: string) => c.replace(/[-_]/gi, "").toUpperCase())
-                    .replace(/[^a-zA-Z]/g, "");
+                    .replace(/[^a-zA-Z0-9]/g, "");
             }
             const key: string = methodName ? methodName : formatPathToKey(path, method);
             extracted[key] = {};
