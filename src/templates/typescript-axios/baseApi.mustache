@@ -1,8 +1,7 @@
 // tslint:disable
 import axios, { AxiosRequestConfig, AxiosInstance, AxiosPromise, AxiosResponse, AxiosError, Canceler } from "axios";
 // Utils
-import { isEmpty } from "@sebgroup/frontend-tools/dist/isEmpty";
-import { StorageManagement } from "@sebgroup/frontend-tools/dist/StorageManagement";
+import { isEmpty, StorageManagement } from "@sebgroup/frontend-tools";
 
 {{#withCustomInterceptors}}
 const interceptors: ApiInterceptorsProps = require("@ApiInterceptors").default;
@@ -20,7 +19,22 @@ interface KeyValuePair {
     [key: string]: any;
 }
 
+export interface DefaultConfig {
+    delay: number;
+    defaultHeaders?: () => {};
+    useMock?: boolean;
+}
+
 export const defaultBasePath: string = "{{#baseUrl}}{{baseUrl}}{{/baseUrl}}{{^baseUrl}}{{#basePath}}{{{basePath}}}{{/basePath}}{{/baseUrl}}".replace(/\/$/, "");
+
+const configs: DefaultConfig = {{#withCustomConfigs}}require("@configs").default;{{/withCustomConfigs}}{{^withCustomConfigs}}{
+    delay: 1500,
+    defaultHeaders: () => {
+        return {};
+    },
+    useMock: false
+};
+{{/withCustomConfigs}}
 
 export enum StorageKeysEnum {
     TOKEN = "TOKEN"
@@ -41,28 +55,12 @@ export interface ApiInterceptorsProps {
     response: AxiosResponseInterceptor;
 }
 
-export interface DefaultConfig {
-    delay: number;
-    defaultHeaders?: () => {};
-    useMock?: boolean;
-}
-
 export function simulateData(resolve: any, data: any, status: number, timeout: number): any {
     return setTimeout(() => { resolve({ status: status, data: data }); }, timeout);
 }
 
-const configs: DefaultConfig = {{#withCustomConfigs}}require("@configs").default;{{/withCustomConfigs}}{{^withCustomConfigs}}{
-    delay: 1500,
-    defaultHeaders: () => {
-        return {};
-    },
-    useMock: false
-};
-{{/withCustomConfigs}}
-
 export class APIHandler {
     protected basePath = defaultBasePath;
-    protected defaultHeaders: any = configs.defaultHeaders();
     protected axiosInstance: AxiosInstance = axios.create();
     protected storage: StorageManagement = new StorageManagement();
     protected className: string;
@@ -115,8 +113,9 @@ export class APIHandler {
      * @returns the initialized options object
      */
     protected initOptions(options: AxiosRequestConfig, queryParams: KeyValuePair, headerParams: KeyValuePair, canceler: (c: Canceler) => void): AxiosRequestConfig {
+        const defaultHeaders: any = configs.defaultHeaders();
         options = options || {};
-        options.headers = !isEmpty(this.defaultHeaders) ? { ...this.defaultHeaders, ...options.headers } : options.headers;
+        options.headers = !isEmpty(defaultHeaders) ? { ...defaultHeaders, ...options.headers } : options.headers;
         options.params = options.params ? options.params : {};
         options.responseType = options.responseType ? options.responseType : "json";
         this.mergeObjects(options.params, queryParams);
