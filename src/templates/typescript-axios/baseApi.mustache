@@ -69,6 +69,7 @@ export class APIHandler {
 
     constructor(className: string) {
         this.className = className;
+        this.axiosInstance.defaults.withCredentials = true;
         {{#withCustomInterceptors}}
         interceptors.response && this.axiosInstance.interceptors.response.use(interceptors.response?.onFullfilled, interceptors.response?.onRejected);
         interceptors.request && this.axiosInstance.interceptors.request.use(interceptors.request?.onFullfilled, interceptors.request?.onRejected);
