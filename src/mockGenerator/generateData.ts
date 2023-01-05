@@ -72,7 +72,7 @@ export function generateData(modelName: string, schema: OpenAPIV2.SchemaObject |
             case "array": newModel = [generateData(modelName, schema.items, models)]; break;
             case "integer":
             case "number": newModel = schema.example || 0; break;
-            case "boolean": newModel = schema.example || true; break;
+            case "boolean": newModel = schema.example ?? true; break;
             default:
                 let example: string = schema.example ? schema.example : schema.enum ? schema.enum[0] : modelName;
                 if (schema.format === "date-time") {
